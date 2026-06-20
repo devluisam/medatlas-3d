@@ -1,0 +1,556 @@
+// ================================================================
+// MEDATLAS 3D — Prisma Schema
+// ================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ================================================================
+// AUTH
+// ================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(STUDENT)
+  plan          PlanType  @default(FREE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  progress      UserProgress[]
+  quizAttempts  QuizAttempt[]
+  flashcardSets FlashcardSet[]
+  studyNotes    StudyNote[]
+  achievements  UserAchievement[]
+  aiConversations AiConversation[]
+  studyStreaks  StudyStreak[]
+  studyStats    StudyStats?
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ================================================================
+// ANATOMICAL STRUCTURES
+// ================================================================
+
+model AnatomicalStructure {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  name            String
+  scientificName  String?
+  commonNames     String[]
+  category        StructureCategory
+  system          AnatomicalSystem
+  region          BodyRegion
+  side            BodySide    @default(BILATERAL)
+
+  // Content tabs
+  summary         String    @db.Text
+  anatomyDetail   String?   @db.Text
+  physiology      String?   @db.Text
+  histology       String?   @db.Text
+  embryology      String?   @db.Text
+  bloodSupply     String?   @db.Text
+  venousDrainage  String?   @db.Text
+  lymphDrainage   String?   @db.Text
+  innervation     String?   @db.Text
+  clinicalNotes   String?   @db.Text
+  surgicalNotes   String?   @db.Text
+  trivia          String?   @db.Text
+
+  // 3D Model references
+  modelId         String?   // ID within the 3D scene
+  modelFile       String?   // path to isolated model file
+  thumbnailUrl    String?
+  imageUrls       String[]
+
+  // Search optimization
+  tags            String[]
+
+  // Metadata
+  difficulty      Difficulty  @default(INTERMEDIATE)
+  isPublished     Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  pathologies       StructurePathology[]
+  questions         Question[]
+  flashcards        Flashcard[]
+  studyNotes        StudyNote[]
+  userProgress      UserProgress[]
+  relatedStructures StructureRelation[] @relation("SourceStructure")
+  relatedTo         StructureRelation[] @relation("TargetStructure")
+
+  @@index([system])
+  @@index([category])
+  @@index([region])
+  @@map("anatomical_structures")
+}
+
+model StructureRelation {
+  id          String  @id @default(cuid())
+  sourceId    String
+  targetId    String
+  relationType RelationType
+
+  source  AnatomicalStructure @relation("SourceStructure", fields: [sourceId], references: [id])
+  target  AnatomicalStructure @relation("TargetStructure", fields: [targetId], references: [id])
+
+  @@unique([sourceId, targetId, relationType])
+  @@map("structure_relations")
+}
+
+// ================================================================
+// PATHOLOGIES
+// ================================================================
+
+model StructurePathology {
+  id            String    @id @default(cuid())
+  structureId   String
+  name          String
+  icd10Code     String?
+  description   String    @db.Text
+  symptoms      String[]
+  diagnosis     String?   @db.Text
+  treatment     String?   @db.Text
+  prognosis     String?   @db.Text
+  prevalence    String?
+  imageUrls     String[]
+
+  structure  AnatomicalStructure @relation(fields: [structureId], references: [id])
+
+  @@map("structure_pathologies")
+}
+
+// ================================================================
+// QUIZ & QUESTIONS
+// ================================================================
+
+model Question {
+  id              String    @id @default(cuid())
+  structureId     String?
+  system          AnatomicalSystem?
+  type            QuestionType
+  difficulty      Difficulty
+  level           StudyLevel  @default(GRADUATION)
+  stem            String    @db.Text
+  context         String?   @db.Text
+  options         Json      // [{id, text, isCorrect, explanation}]
+  correctAnswer   String
+  explanation     String    @db.Text
+  references      String[]
+  tags            String[]
+  imageUrl        String?
+  year            Int?      // vestibular/residency year
+  source          String?   // FUVEST, USP, ENADE, REVALIDA etc
+
+  isActive        Boolean   @default(true)
+  timesAnswered   Int       @default(0)
+  timesCorrect    Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  structure   AnatomicalStructure? @relation(fields: [structureId], references: [id])
+  attempts    QuizAttemptQuestion[]
+
+  @@index([system, difficulty])
+  @@map("questions")
+}
+
+model QuizAttempt {
+  id          String    @id @default(cuid())
+  userId      String
+  mode        QuizMode
+  system      AnatomicalSystem?
+  difficulty  Difficulty?
+  totalQ      Int
+  correctQ    Int
+  timeSeconds Int
+  score       Float
+  xpEarned    Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions QuizAttemptQuestion[]
+
+  @@map("quiz_attempts")
+}
+
+model QuizAttemptQuestion {
+  id          String    @id @default(cuid())
+  attemptId   String
+  questionId  String
+  userAnswer  String?
+  isCorrect   Boolean?
+  timeSeconds Int?
+  flagged     Boolean   @default(false)
+
+  attempt   QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question  Question    @relation(fields: [questionId], references: [id])
+
+  @@map("quiz_attempt_questions")
+}
+
+// ================================================================
+// FLASHCARDS
+// ================================================================
+
+model FlashcardSet {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  system      AnatomicalSystem?
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcards Flashcard[]
+
+  @@map("flashcard_sets")
+}
+
+model Flashcard {
+  id          String    @id @default(cuid())
+  setId       String?
+  structureId String?
+  front       String    @db.Text
+  back        String    @db.Text
+  hint        String?
+  imageUrl    String?
+  tags        String[]
+
+  // Spaced Repetition (SM-2 algorithm)
+  easeFactor    Float     @default(2.5)
+  interval      Int       @default(1)
+  repetitions   Int       @default(0)
+  nextReview    DateTime  @default(now())
+  lastReviewed  DateTime?
+
+  set       FlashcardSet?       @relation(fields: [setId], references: [id])
+  structure AnatomicalStructure? @relation(fields: [structureId], references: [id])
+
+  @@map("flashcards")
+}
+
+// ================================================================
+// PROGRESS & GAMIFICATION
+// ================================================================
+
+model UserProgress {
+  id              String    @id @default(cuid())
+  userId          String
+  structureId     String
+  viewCount       Int       @default(0)
+  studyTimeSeconds Int      @default(0)
+  completed       Boolean   @default(false)
+  mastered        Boolean   @default(false)
+  lastViewed      DateTime  @default(now())
+
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  structure AnatomicalStructure @relation(fields: [structureId], references: [id])
+
+  @@unique([userId, structureId])
+  @@map("user_progress")
+}
+
+model StudyStats {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  totalXp           Int       @default(0)
+  level             Int       @default(1)
+  totalStudySeconds Int       @default(0)
+  structuresViewed  Int       @default(0)
+  structuresMastered Int      @default(0)
+  quizzesCompleted  Int       @default(0)
+  avgQuizScore      Float     @default(0)
+  currentStreak     Int       @default(0)
+  longestStreak     Int       @default(0)
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_stats")
+}
+
+model StudyStreak {
+  id      String    @id @default(cuid())
+  userId  String
+  date    DateTime  @db.Date
+  seconds Int       @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("study_streaks")
+}
+
+model Achievement {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String
+  iconUrl     String?
+  xpReward    Int       @default(0)
+  condition   Json
+
+  users UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String    @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime  @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@map("user_achievements")
+}
+
+// ================================================================
+// AI
+// ================================================================
+
+model AiConversation {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String?
+  mode      AiMode    @default(TUTOR)
+  messages  AiMessage[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id             String    @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String    @db.Text
+  tokensUsed     Int?
+  createdAt      DateTime  @default(now())
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_messages")
+}
+
+// ================================================================
+// NOTES
+// ================================================================
+
+model StudyNote {
+  id          String    @id @default(cuid())
+  userId      String
+  structureId String?
+  title       String
+  content     String    @db.Text
+  tags        String[]
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  structure AnatomicalStructure? @relation(fields: [structureId], references: [id])
+
+  @@map("study_notes")
+}
+
+// ================================================================
+// ENUMS
+// ================================================================
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  RESEARCHER
+  ADMIN
+}
+
+enum PlanType {
+  FREE
+  PRO
+  INSTITUTIONAL
+}
+
+enum AnatomicalSystem {
+  INTEGUMENTARY
+  MUSCULAR_SUPERFICIAL
+  MUSCULAR_DEEP
+  SKELETAL
+  NERVOUS
+  ARTERIAL
+  VENOUS
+  LYMPHATIC
+  RESPIRATORY
+  DIGESTIVE
+  URINARY
+  ENDOCRINE
+  REPRODUCTIVE_MALE
+  REPRODUCTIVE_FEMALE
+  CARDIOVASCULAR
+  IMMUNE
+}
+
+enum StructureCategory {
+  BONE
+  MUSCLE
+  NERVE
+  ARTERY
+  VEIN
+  LYMPH_NODE
+  LYMPH_VESSEL
+  ORGAN
+  GLAND
+  CARTILAGE
+  LIGAMENT
+  TENDON
+  FASCIA
+  SKIN
+  JOINT
+  VESSEL
+  OTHER
+}
+
+enum BodyRegion {
+  HEAD
+  NECK
+  THORAX
+  ABDOMEN
+  PELVIS
+  PERINEUM
+  UPPER_LIMB_SHOULDER
+  UPPER_LIMB_ARM
+  UPPER_LIMB_FOREARM
+  UPPER_LIMB_HAND
+  LOWER_LIMB_THIGH
+  LOWER_LIMB_LEG
+  LOWER_LIMB_FOOT
+  SPINE
+  BACK
+}
+
+enum BodySide {
+  LEFT
+  RIGHT
+  BILATERAL
+  MIDLINE
+}
+
+enum Difficulty {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum StudyLevel {
+  HIGHSCHOOL
+  GRADUATION
+  RESIDENCY
+  FELLOWSHIP
+  RESEARCH
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  MATCHING
+  ANATOMICAL_ID
+  CLINICAL_CASE
+  IMAGE_BASED
+}
+
+enum QuizMode {
+  PRACTICE
+  TIMED
+  EXAM
+  CLINICAL
+}
+
+enum RelationType {
+  ADJACENT
+  SUPPLIES_BLOOD
+  DRAINS_BLOOD
+  INNERVATES
+  CONTAINS
+  PART_OF
+  ORIGINATES_FROM
+  INSERTS_INTO
+}
+
+enum AiMode {
+  TUTOR
+  QUIZ_GENERATOR
+  SUMMARY
+  FLASHCARD_GENERATOR
+  CLINICAL_CASE
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
