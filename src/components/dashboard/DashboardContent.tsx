@@ -69,7 +69,7 @@ export function DashboardContent({ userName }: { userName: string }) {
             </Button>
             <Button
               variant="ghost"
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={() => signOut({ redirectTo: "/" })}
               aria-label="Sair da conta"
             >
               <LogOut className="w-4 h-4" />
