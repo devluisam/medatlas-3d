@@ -141,13 +141,21 @@ Formato: GLTF/GLB com LOD (3 níveis) + Draco compression.
 
 ## Segurança
 
-- **JWT** via NextAuth com rotação automática
-- **Row Level Security** no Supabase/PostgreSQL
-- **Zod** validation em todos endpoints
-- **Rate limiting** via Upstash Redis (Edge middleware)
+Implementado:
+
+- **Sessão em JWT** via NextAuth v5, assinada com `AUTH_SECRET`
+- **Senhas** com hash bcrypt (custo 12); nunca são retornadas pela API
+- **CSRF** nas rotas de autenticação, pelo próprio NextAuth
+- **Zod** validando as entradas de login e registro, e o chat de IA
+- `/dashboard` protegido no servidor: sem sessão, redireciona para `/login`
+- Consultas via Prisma — sem SQL concatenado
+
+Ainda não implementado:
+
+- Rate limiting nas rotas de autenticação e de IA
 - Headers de segurança em `next.config.ts`
-- **CSRF** protegido pelo NextAuth
-- SQL injection impossível via Prisma ORM
+- Validação com Zod nas rotas de busca e de estruturas
+- Verificação de email e recuperação de senha
 
 ---
 
@@ -174,7 +182,7 @@ Formato: GLTF/GLB com LOD (3 níveis) + Draco compression.
 - [x] Chat IA streaming
 - [x] Sistema de quiz
 - [x] Dashboard
-- [ ] Auth completa (NextAuth)
+- [x] Auth completa (NextAuth)
 - [ ] Deploy no Vercel
 
 ### Fase 2 — Modelos 3D (semanas 5-8)

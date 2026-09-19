@@ -1,5 +1,7 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { isGoogleEnabled } from "@/lib/auth";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -50,7 +52,9 @@ export default function LoginPage() {
               Entre para continuar seus estudos
             </p>
           </div>
-          <LoginForm />
+          <Suspense fallback={<div className="h-64" />}>
+            <LoginForm googleEnabled={isGoogleEnabled} />
+          </Suspense>
           <p className="text-center text-white/40 text-sm mt-6">
             Não tem conta?{" "}
             <Link href="/register" className="text-blue-400 hover:text-blue-300">

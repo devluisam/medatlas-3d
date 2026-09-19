@@ -94,6 +94,9 @@ npm run dev              # http://localhost:3000
 | `DATABASE_URL` | Conexão PostgreSQL usada pelo Prisma |
 | `DIRECT_URL` | Conexão direta (migrations, quando há pooler) |
 | `OPENAI_API_KEY` | Tutor de IA e geração de questões |
+| `AUTH_SECRET` | Assinatura da sessão do NextAuth (`npx auth secret`) |
+| `AUTH_URL` | URL pública da aplicação |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Opcionais — habilitam o login com Google |
 
 O arquivo `.env` está no `.gitignore` — use o `.env.example` como modelo e nunca
 versione chaves.
@@ -107,7 +110,7 @@ src/
 │   ├── (dashboard)/     painel do estudante
 │   ├── (study)/quiz/    sessão de quiz
 │   ├── (viewer)/viewer/ visualizador 3D
-│   └── api/             rotas de estruturas, busca e IA
+│   └── api/             auth, estruturas, busca e IA
 ├── components/
 │   ├── viewer/          cena 3D, controles, camadas e corte
 │   ├── study/           painel de estudo, flashcards e questões
@@ -115,7 +118,7 @@ src/
 │   ├── ai/              chat do tutor
 │   └── ui/              primitivos de interface
 ├── stores/              Zustand (viewer, quiz, study)
-└── lib/                 cliente Prisma e utilitários
+└── lib/                 Prisma, NextAuth (auth.ts) e validações
 prisma/
 ├── schema.prisma        20 modelos (estruturas, quiz, progresso, IA)
 ├── clinical-content.ts  conteúdo clínico das estruturas
@@ -127,11 +130,16 @@ prisma/
 O projeto é um MVP funcional: o visualizador, a busca, o conteúdo clínico, o quiz,
 os flashcards e o tutor de IA estão implementados, e a aplicação compila e roda.
 
+A autenticação está ligada: NextAuth v5 com provider de credenciais (senha com
+bcrypt), sessão em JWT e adapter do Prisma. `/dashboard` exige sessão e redireciona
+para `/login` quando não há. O login com Google é opcional — o botão só aparece
+quando `AUTH_GOOGLE_ID` e `AUTH_GOOGLE_SECRET` estão definidos no ambiente.
+
 Pendente, e explicitamente não pronto:
 
-- **Autenticação** — as telas de login e registro existem e o schema já tem os modelos
-  de sessão, mas o provider ainda não está ligado (as chamadas de `signIn` estão
-  comentadas no formulário).
+- Verificação de email e recuperação de senha — não há serviço de email configurado.
+- O dashboard identifica o usuário pela sessão, mas as métricas de progresso ainda
+  são dados de exemplo, não vêm do banco.
 - O modelo 3D usado é o esqueleto; outros sistemas anatômicos ainda não têm malha própria.
 
 ## Autor

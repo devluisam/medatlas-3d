@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, Clock, Star, Target, Flame, Trophy, ArrowRight, Zap, BookOpen } from "lucide-react";
+import { Brain, Clock, Star, Target, Flame, Trophy, ArrowRight, Zap, BookOpen, LogOut } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,7 +43,7 @@ const ACHIEVEMENTS_RECENT = [
   { name: "7 Dias Seguidos", icon: "🔥", xp: 300, unlocked: false },
 ];
 
-export function DashboardContent() {
+export function DashboardContent({ userName }: { userName: string }) {
   const userLevel = 3;
   const levelInfo = LEVEL_TABLE[userLevel - 1];
   const xp = 2100;
@@ -56,15 +57,24 @@ export function DashboardContent() {
       <div className="border-b bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold">Olá, Estudante 👋</h1>
+            <h1 className="text-xl font-bold">Olá, {userName.split(" ")[0]} 👋</h1>
             <p className="text-muted-foreground text-sm">Continue seus estudos de anatomia</p>
           </div>
-          <Button asChild>
-            <Link href="/viewer">
-              Explorar 3D
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild>
+              <Link href="/viewer">
+                Explorar 3D
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => signOut({ callbackUrl: "/" })}
+              aria-label="Sair da conta"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
