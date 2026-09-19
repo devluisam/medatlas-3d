@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { normalizeForSearch } from "@/lib/search-text";
 
 export const runtime = "nodejs";
 
@@ -13,14 +14,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Busca no texto normalizado: "femur" e "fêmur" chegam ao mesmo lugar.
+    const termo = normalizeForSearch(q);
     const where: any = {
       isPublished: true,
-      OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { scientificName: { contains: q, mode: "insensitive" } },
-        { commonNames: { has: q } },
-        { tags: { has: q.toLowerCase() } },
-      ],
+      searchText: { contains: termo },
     };
 
     if (system) {
@@ -45,7 +43,7 @@ export async function GET(req: NextRequest) {
 
     const results = structures.map((s) => ({
       ...s,
-      relevanceScore: s.name.toLowerCase().startsWith(q.toLowerCase()) ? 2 : 1,
+      relevanceScore: normalizeForSearch(s.name).startsWith(termo) ? 2 : 1,
     }));
 
     return NextResponse.json({ results });

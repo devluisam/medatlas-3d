@@ -118,6 +118,8 @@ model AnatomicalStructure {
 
   // Search optimization
   tags            String[]
+  // nome + nome científico + sinônimos + tags, sem acento e em minúsculo
+  searchText      String    @default("")
 
   // Metadata
   difficulty      Difficulty  @default(INTERMEDIATE)

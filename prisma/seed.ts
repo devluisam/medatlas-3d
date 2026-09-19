@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { CLINICAL_CONTENT } from "./clinical-content";
+import { buildSearchText } from "../src/lib/search-text";
 
 const prisma = new PrismaClient();
 
@@ -953,6 +954,7 @@ async function main() {
       ...(extra.histology ? { histology: extra.histology } : {}),
       ...(extra.diagnosis ? { clinicalNotes: extra.diagnosis } : {}),
       ...(extra.surgery ? { surgicalNotes: extra.surgery } : {}),
+      searchText: buildSearchText(s),
     };
     await prisma.anatomicalStructure.upsert({
       where: { slug: s.slug },
