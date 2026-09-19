@@ -16,6 +16,26 @@ seleciona uma estrutura e recebe ali mesmo a descrição clínica, as questões 
 flashcards daquela estrutura — com o progresso registrado para orientar a próxima
 sessão de estudo.
 
+## Preview
+
+Capturas de uma instalação local com `npm run db:seed` (36 estruturas, 41
+patologias, 6 questões de exemplo).
+
+| Visualizador 3D | Home |
+|---|---|
+| ![Visualizador 3D](docs/screenshots/viewer-3d.jpg) | ![Home](docs/screenshots/home.jpg) |
+
+| Quiz | Login |
+|---|---|
+| ![Quiz](docs/screenshots/quiz.jpg) | ![Login](docs/screenshots/login.jpg) |
+
+O painel abaixo já exige sessão, mas os números que ele mostra ainda são dados
+de exemplo — as métricas de progresso não vêm do banco (ver **Estado atual**).
+
+![Dashboard](docs/screenshots/dashboard.jpg)
+
+---
+
 ## Funcionalidades
 
 - **Visualizador 3D** — modelo do esqueleto em Three.js / React Three Fiber, com
