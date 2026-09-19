@@ -106,7 +106,7 @@ export function QuizHub() {
           <div>
             <h1 className="text-xl font-bold">Quiz Anatômico</h1>
             <p className="text-muted-foreground text-sm">
-              20.000+ questões de anatomia humana
+              Questões comentadas, por sistema e dificuldade
             </p>
           </div>
         </div>

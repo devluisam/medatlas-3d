@@ -3,7 +3,7 @@ import { QuizHub } from "@/components/quiz/QuizHub";
 
 export const metadata: Metadata = {
   title: "Quiz Anatômico — MEDATLAS 3D",
-  description: "Teste seus conhecimentos com 20.000+ questões de anatomia humana.",
+  description: "Pratique anatomia humana com questões comentadas, por sistema e por dificuldade.",
 };
 
 export default function QuizPage() {

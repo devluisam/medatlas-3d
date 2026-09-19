@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { HeroScene } from "@/components/viewer/3d/HeroScene";
 
 const STATS = [
-  { value: "13+", label: "Sistemas Anatômicos" },
-  { value: "2.500+", label: "Estruturas 3D" },
-  { value: "20.000+", label: "Questões" },
-  { value: "50+", label: "Universidades" },
+  { value: "14", label: "Sistemas anatômicos" },
+  { value: "3D", label: "Navegável no navegador" },
+  { value: "SM-2", label: "Repetição espaçada" },
+  { value: "IA", label: "Tutor e geração de questões" },
 ];
 
 const FEATURES = [
@@ -92,7 +92,7 @@ export default function HomePage() {
                 variant="outline"
               >
                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 animate-pulse" />
-                Plataforma de Anatomia 3D #1 do Brasil
+                Atlas de anatomia humana interativo
               </Badge>
             </motion.div>
 
@@ -108,9 +108,9 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg text-white/60 mb-8 max-w-lg leading-relaxed">
-              A plataforma educacional de anatomia mais avançada do mundo.
-              2.500+ estruturas interativas, IA tutor, cortes anatômicos e
-              20.000 questões de residência médica.
+              Modelo 3D navegável no navegador, ligado a um banco de estruturas
+              anatômicas: conteúdo clínico por estrutura, cortes, tutor de IA, quiz
+              com explicação e flashcards com repetição espaçada.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -205,8 +205,7 @@ export default function HomePage() {
               <span className="text-primary">medicina de ponta</span>
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Desenvolvido por especialistas em anatomia e tecnologia para
-              estudantes e profissionais da saúde.
+              Feito para estudar anatomia no navegador, sem instalar nada.
             </p>
           </motion.div>
 

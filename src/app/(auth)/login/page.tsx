@@ -37,8 +37,8 @@ export default function LoginPage() {
             <span className="text-blue-400">na palma da mão</span>
           </h1>
           <p className="text-white/50 text-lg max-w-md">
-            2.500+ estruturas interativas, IA tutor e 20.000 questões de
-            residência médica.
+            Modelo 3D navegável, conteúdo clínico por estrutura, tutor de IA e
+            quiz com explicação.
           </p>
         </div>
       </div>

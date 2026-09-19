@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s | MEDATLAS 3D",
   },
   description:
-    "A plataforma educacional de anatomia humana mais avançada do mundo. Explore o corpo humano em 3D, estude com IA e acelere sua carreira médica.",
+    "Atlas de anatomia humana interativo: modelo 3D navegável no navegador, conteúdo clínico por estrutura, quiz com explicação e flashcards com repetição espaçada.",
   keywords: [
     "anatomia humana",
     "atlas anatômico",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     url: process.env.NEXT_PUBLIC_APP_URL,
     title: "MEDATLAS 3D — Anatomia Humana Interativa",
     description:
-      "A plataforma educacional de anatomia humana mais avançada do mundo.",
+      "Atlas de anatomia humana interativo, com modelo 3D navegável no navegador.",
     siteName: "MEDATLAS 3D",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
