@@ -1,52 +1,28 @@
-import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { RegisterSchema } from "@/lib/validations/auth";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { ApiError, json, readJson, route } from "@/server/http";
 
-export async function POST(request: Request) {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Corpo da requisição inválido" }, { status: 400 });
+export const POST = route("auth/register", async (request) => {
+  const limit = rateLimit(`register:${clientIp(request.headers)}`, 5, 60 * 60 * 1000);
+  if (!limit.ok) {
+    throw new ApiError("RATE_LIMITED", "Muitos cadastros a partir desta rede. Tente mais tarde.", {
+      "Retry-After": String(limit.retryAfterSeconds),
+    });
   }
 
-  const parsed = RegisterSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
-      { status: 400 }
-    );
-  }
-
-  const { name, email, password } = parsed.data;
+  const { name, email, password } = await readJson(request, RegisterSchema, 4_000);
   const normalizedEmail = email.toLowerCase();
 
-  try {
-    const existing = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-      select: { id: true },
-    });
-    if (existing) {
-      return NextResponse.json(
-        { error: "Já existe uma conta com esse email" },
-        { status: 409 }
-      );
-    }
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail }, select: { id: true } });
+  if (existing) throw new ApiError("CONFLICT", "Já existe uma conta com esse email. Entre ou use outro email.");
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+  const hashedPassword = await bcrypt.hash(password, 12);
+  await prisma.user.create({
+    data: { name, email: normalizedEmail, password: hashedPassword },
+    select: { id: true },
+  });
 
-    await prisma.user.create({
-      data: { name, email: normalizedEmail, password: hashedPassword },
-      select: { id: true },
-    });
-
-    return NextResponse.json({ ok: true }, { status: 201 });
-  } catch (error) {
-    console.error("[register] falha ao criar usuario", error);
-    return NextResponse.json(
-      { error: "Erro ao criar a conta. Tente novamente." },
-      { status: 500 }
-    );
-  }
-}
+  return json({ ok: true }, { status: 201 });
+});

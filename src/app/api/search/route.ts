@@ -1,54 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { normalizeForSearch } from "@/lib/search-text";
+import { z } from "zod";
+import { json, readQuery, route } from "@/server/http";
+import { listStructures } from "@/server/structures";
+import { SYSTEM_KEYS } from "@/lib/labels";
 
-export const runtime = "nodejs";
+const Query = z.object({
+  q: z.string().trim().max(80).default(""),
+  limit: z.coerce.number().int().min(1).max(20).default(8),
+  system: z.enum(SYSTEM_KEYS).optional(),
+});
 
-export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get("q")?.trim();
-  const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") ?? "8"), 20);
-  const system = req.nextUrl.searchParams.get("system");
-
-  if (!q || q.length < 2) {
-    return NextResponse.json({ results: [] });
-  }
-
-  try {
-    // Busca no texto normalizado: "femur" e "fêmur" chegam ao mesmo lugar.
-    const termo = normalizeForSearch(q);
-    const where: any = {
-      isPublished: true,
-      searchText: { contains: termo },
-    };
-
-    if (system) {
-      where.system = system.toUpperCase();
-    }
-
-    const structures = await prisma.anatomicalStructure.findMany({
-      where,
-      take: limit,
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        scientificName: true,
-        category: true,
-        system: true,
-        region: true,
-        thumbnailUrl: true,
-      },
-      orderBy: [{ name: "asc" }],
-    });
-
-    const results = structures.map((s) => ({
-      ...s,
-      relevanceScore: normalizeForSearch(s.name).startsWith(termo) ? 2 : 1,
-    }));
-
-    return NextResponse.json({ results });
-  } catch (error) {
-    console.error("Search error:", error);
-    return NextResponse.json({ results: [] }, { status: 500 });
-  }
-}
+/** Busca rápida da paleta (Ctrl+K). Abaixo de 2 caracteres não consulta o banco. */
+export const GET = route("search", async (req) => {
+  const { q, limit, system } = readQuery(req, Query);
+  if (q.length < 2) return json({ results: [] });
+  const results = await listStructures({ q, system, limit });
+  return json({ results });
+});

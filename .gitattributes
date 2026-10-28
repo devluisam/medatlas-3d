@@ -1,0 +1,4 @@
+# Migrations do Prisma têm checksum: o conteúdo não pode mudar com o checkout no Windows
+*.sql text eol=lf
+prisma/migrations/** text eol=lf
+*.glb binary

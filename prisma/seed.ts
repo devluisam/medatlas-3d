@@ -1,6 +1,8 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { CLINICAL_CONTENT } from "./clinical-content";
 import { buildSearchText } from "../src/lib/search-text";
+import { hasModelMesh } from "../src/lib/anatomy/skeleton-map";
+import { SEED_ACHIEVEMENTS, SEED_FLASHCARDS, SEED_QUESTIONS } from "./study-content";
 
 const prisma = new PrismaClient();
 
@@ -944,100 +946,121 @@ const QUESTIONS = [
   },
 ];
 
+// Chaves estáveis das 6 questões originais (antes identificadas só pelo enunciado)
+const LEGACY_QUESTION_KEYS: Record<string, string> = {
+  femur: "femur-circunflexa-medial",
+  "femoral-nerve": "femoral-nerve-raizes-l3-l4",
+  humerus: "humerus-diafise-nervo-radial",
+  heart: "heart-no-sinoatrial",
+  kidney: "kidney-eritropoetina",
+  lungs: "lungs-lobos",
+};
+
+/**
+ * Seed idempotente: só cria ou atualiza, por chave estável (slug, seedKey,
+ * estrutura+nome). Nunca apaga — tentativas de quiz e revisões que apontam
+ * para questões e cartões continuam válidas depois de reexecutar.
+ */
 async function main() {
-  console.log("🌱 Seeding MEDATLAS database...");
+  console.log("Populando o banco do MEDATLAS…");
 
   for (const s of [...STRUCTURES, ...EXTRA_BONES]) {
     const extra = CLINICAL_CONTENT[s.slug as string] ?? {};
     const data = {
       ...s,
+      // modelId só para estruturas que existem de fato no modelo 3D
+      modelId: hasModelMesh(s.slug as string) ? (s.slug as string) : null,
       ...(extra.histology ? { histology: extra.histology } : {}),
       ...(extra.diagnosis ? { clinicalNotes: extra.diagnosis } : {}),
       ...(extra.surgery ? { surgicalNotes: extra.surgery } : {}),
       searchText: buildSearchText(s),
     };
-    await prisma.anatomicalStructure.upsert({
-      where: { slug: s.slug },
-      update: data,
-      create: data,
+    await prisma.anatomicalStructure.upsert({ where: { slug: s.slug }, update: data, create: data });
+  }
+  const slugToId = new Map(
+    (await prisma.anatomicalStructure.findMany({ select: { id: true, slug: true } })).map((r) => [r.slug, r.id])
+  );
+  const requireStructure = (slug: string) => {
+    const id = slugToId.get(slug);
+    if (!id) throw new Error(`Estrutura inexistente no seed: ${slug}`);
+    return id;
+  };
+
+  const pathologies = [
+    ...Object.entries(CLINICAL_CONTENT).flatMap(([slug, c]) => (c.pathology ? [{ structureSlug: slug, ...c.pathology }] : [])),
+    ...PATHOLOGIES,
+  ];
+  for (const { structureSlug, ...p } of pathologies) {
+    const structureId = requireStructure(structureSlug);
+    await prisma.structurePathology.upsert({
+      where: { structureId_name: { structureId, name: p.name } },
+      update: p,
+      create: { ...p, structureId },
     });
-    console.log(`  ✓ Structure: ${s.name}`);
   }
 
-  // Pathologies from the clinical content map (one per structure)
-  for (const [slug, content] of Object.entries(CLINICAL_CONTENT)) {
-    if (!content.pathology) continue;
-    const structure = await prisma.anatomicalStructure.findUnique({ where: { slug } });
-    if (!structure) continue;
-    await prisma.structurePathology.deleteMany({
-      where: { structureId: structure.id, name: content.pathology.name },
-    });
-    await prisma.structurePathology.create({
-      data: { ...content.pathology, structureId: structure.id },
-    });
-  }
-  console.log(`  ✓ Patologias clínicas adicionadas`);
-
-  for (const p of PATHOLOGIES) {
-    const structure = await prisma.anatomicalStructure.findUnique({
-      where: { slug: p.structureSlug },
-    });
-    if (!structure) continue;
-    const { structureSlug, ...pathData } = p;
-
-    // Avoid duplicates: delete existing pathology with same name for this structure
-    await prisma.structurePathology.deleteMany({
-      where: { structureId: structure.id, name: p.name },
-    });
-    await prisma.structurePathology.create({
-      data: { ...pathData, structureId: structure.id },
-    });
-    console.log(`  ✓ Pathology: ${p.name}`);
-  }
-
-  for (const q of QUESTIONS) {
-    const structure = await prisma.anatomicalStructure.findUnique({
-      where: { slug: q.structureSlug },
-    });
-    const { structureSlug, ...qData } = q;
-
-    // Avoid duplicates: delete existing question with same stem
-    await prisma.question.deleteMany({ where: { stem: q.stem } });
-    await prisma.question.create({
-      data: { ...qData, structureId: structure?.id },
-    });
-    console.log(`  ✓ Question: ${q.stem.slice(0, 40)}...`);
-  }
-
-  const achievements = [
-    { slug: "first-structure", name: "Primeiro Passo", description: "Explorou a primeira estrutura anatômica", xpReward: 50, condition: { type: "structure_viewed", count: 1 } },
-    { slug: "skeleton-complete", name: "Anatomista Ósseo", description: "Estudou todos os ossos do esqueleto", xpReward: 500, condition: { type: "system_complete", system: "SKELETAL" } },
-    { slug: "streak-7", name: "Semana Consistente", description: "Estudou 7 dias consecutivos", xpReward: 300, condition: { type: "streak", days: 7 } },
-    { slug: "quiz-100", name: "Centurião", description: "Respondeu 100 questões", xpReward: 200, condition: { type: "questions_answered", count: 100 } },
-    { slug: "perfect-quiz", name: "Nota 10", description: "Quiz com 100% de acerto", xpReward: 150, condition: { type: "quiz_perfect" } },
+  const questions = [
+    ...QUESTIONS.map(({ structureSlug, options, ...q }) => ({
+      ...q,
+      seedKey: LEGACY_QUESTION_KEYS[structureSlug]!,
+      structureSlug,
+      options: JSON.parse(options) as unknown[],
+    })),
+    ...SEED_QUESTIONS.map((q) => ({
+      seedKey: q.key,
+      structureSlug: q.structureSlug,
+      type: q.context ? ("CLINICAL_CASE" as const) : ("MULTIPLE_CHOICE" as const),
+      difficulty: q.difficulty,
+      level: "GRADUATION" as const,
+      stem: q.stem,
+      context: q.context,
+      options: q.options.map((text, i) => ({ id: "abcde"[i]!, text, isCorrect: i === q.correct, explanation: "" })),
+      correctAnswer: "abcde"[q.correct]!,
+      explanation: q.explanation,
+      tags: q.tags,
+    })),
   ];
 
-  for (const ach of achievements) {
-    await prisma.achievement.upsert({
-      where: { slug: ach.slug },
-      update: ach,
-      create: ach,
-    });
+  for (const { structureSlug, seedKey, ...q } of questions) {
+    const structureId = requireStructure(structureSlug);
+    const system = (await prisma.anatomicalStructure.findUniqueOrThrow({ where: { id: structureId }, select: { system: true } })).system;
+    const data = { ...q, structureId, system, origin: "CURATED" as const, options: q.options as Prisma.InputJsonValue };
+    // Adota a versão antiga (sem seedKey, criada pelo seed anterior) em vez de duplicar
+    const legacy = await prisma.question.findFirst({ where: { seedKey: null, stem: q.stem, origin: "CURATED" }, select: { id: true } });
+    if (legacy) {
+      await prisma.question.update({ where: { id: legacy.id }, data: { ...data, seedKey } });
+    } else {
+      await prisma.question.upsert({ where: { seedKey }, update: data, create: { ...data, seedKey } });
+    }
   }
-  console.log(`  ✓ ${achievements.length} achievements seeded`);
+
+  const perStructure = new Map<string, number>();
+  for (const [slug, front, back] of SEED_FLASHCARDS) {
+    const index = perStructure.get(slug) ?? 0;
+    perStructure.set(slug, index + 1);
+    const seedKey = `${slug}-${index + 1}`;
+    const data = { front, back, structureId: requireStructure(slug), origin: "CURATED" as const, tags: [slug] };
+    await prisma.flashcard.upsert({ where: { seedKey }, update: data, create: { ...data, seedKey } });
+  }
+
+  for (const ach of SEED_ACHIEVEMENTS) {
+    const data = { ...ach, condition: ach.condition as Prisma.InputJsonValue };
+    await prisma.achievement.upsert({ where: { slug: ach.slug }, update: data, create: data });
+  }
 
   const counts = {
-    structures: await prisma.anatomicalStructure.count(),
-    pathologies: await prisma.structurePathology.count(),
-    questions: await prisma.question.count(),
+    estruturas: await prisma.anatomicalStructure.count(),
+    patologias: await prisma.structurePathology.count(),
+    questoes: await prisma.question.count({ where: { origin: "CURATED" } }),
+    flashcards: await prisma.flashcard.count({ where: { origin: "CURATED" } }),
+    conquistas: await prisma.achievement.count(),
   };
-  console.log(`\n📊 Total no banco: ${counts.structures} estruturas, ${counts.pathologies} patologias, ${counts.questions} questões`);
-  console.log("✅ Database seeded successfully!");
+  console.log("Total no banco:", counts);
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Seed error:", e);
+    console.error("Falha no seed:", e);
     process.exit(1);
   })
   .finally(async () => {
