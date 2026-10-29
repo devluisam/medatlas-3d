@@ -5,7 +5,7 @@ import { isGoogleEnabled } from "@/lib/auth";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Entrar — MEDATLAS 3D",
+  title: "Entrar",
 };
 
 export default function LoginPage() {

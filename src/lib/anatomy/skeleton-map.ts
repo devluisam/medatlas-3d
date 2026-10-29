@@ -120,6 +120,8 @@ export function classifyMeshName(raw: string): MeshPart | null {
     side = sideMatch[1] === "l" ? "left" : "right";
     n = sideMatch[2]!.trim();
   }
+  // Os ossos do pé usam "_" entre as palavras ("metatarsal_1", "proximal_phalange_5")
+  n = n.replace(/_/g, " ").replace(/\s+/g, " ").trim();
 
   let m: RegExpExecArray | null;
   if ((m = /^c([1-7])$/.exec(n))) return { slug: "cervical-vertebrae", part: `Vértebra C${m[1]}`, side: null };

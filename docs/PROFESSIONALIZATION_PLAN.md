@@ -128,3 +128,17 @@ fígado, encéfalo, estômago, rim.
 ## 5. Registro de progresso
 
 - [x] Auditoria e plano (28/10)
+- [x] P0.1 Build sem banco, migrations, seed idempotente (commit e41741b)
+- [x] P0.2–P0.6 Camada de serviços com autorização, IA autenticada com cota, quiz no servidor, SM-2 por usuário, auth endurecida (f0c35b9)
+- [x] P0.6 `callbackUrl` também sanitizado no formulário (`lib/safe-redirect.ts`); headers de segurança e CSP sem domínios externos (`next.config.ts`; `wasm-unsafe-eval` para o decoder meshopt)
+- [x] P1.7 Visualizador reescrito: seleção ↔ busca ↔ painel ↔ URL (`?s=slug`) pelo mesmo slug; destaque, isolar, ocultar, raio-X com opacidade, wireframe, corte real (sagital/coronal/transversal), vistas anatômicas, foco na estrutura com a câmera centrada na área livre; progresso real de download; falha do modelo com nova tentativa; sem WebGL → conteúdo em texto; sistemas sem malha marcados; atribuição CC BY no visualizador e no rodapé
+- [x] Correções encontradas testando no navegador: 72 malhas do pé não eram reconhecidas (nomes com `_`), vista "anterior" mostrava o perfil (esterno e mandíbula deslocados no GLB — a frente agora vem de costelas×coluna, patela×fêmur, metatarsos×calcâneo), primeiro quadro perdido com `frameloop="demand"`
+- [x] P1.8 Painel com dados reais e estado inicial vazio honesto
+- [x] P1.9 Flashcards: fila do dia (`/flashcards`), cartões por estrutura, avaliação gravada (atalhos espaço e 1–4)
+- [x] P1.10 `/atlas` com busca sem acento e filtros por sistema/modelo; `/atlas/[slug]` renderizado no servidor; favoritos e anotações
+- [x] P1.11 Tutor com streaming, cancelamento, histórico por estrutura, cota visível e aviso de IA
+- [x] P2.12 Cabeçalho/rodapé comuns, landing sem afirmações falsas e sem three.js (502 kB → 153 kB), página de privacidade e termos, 404
+- [x] Testes unitários: mapeamento do GLB (lê os nós do arquivo) e redirecionamento seguro
+
+**Pendente:** testes de integração das rotas (isolamento entre usuários) com Postgres descartável; testes unitários de `sm2`, `gamification` e `quiz/questions`; telas de login/cadastro ainda no visual antigo; documentação (`ARCHITECTURE.md`, README) a alinhar com o código.
+

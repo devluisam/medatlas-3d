@@ -116,10 +116,10 @@ export function RegisterForm() {
         {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar conta gratuita"}
       </Button>
 
-      <p className="text-center text-white/25 text-xs">
+      <p className="text-center text-white/40 text-xs">
         Ao criar uma conta, você concorda com os{" "}
-        <a className="text-white/40 underline">Termos de Uso</a> e{" "}
-        <a className="text-white/40 underline">Política de Privacidade</a>.
+        <a href="/privacidade#termos" className="text-white/60 underline hover:text-white">Termos de uso</a> e com a{" "}
+        <a href="/privacidade" className="text-white/60 underline hover:text-white">Política de privacidade</a>.
       </p>
     </form>
   );

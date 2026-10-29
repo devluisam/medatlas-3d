@@ -1,11 +1,21 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ViewerLayout } from "@/components/viewer/ViewerLayout";
+import { listStructures } from "@/server/structures";
 
 export const metadata: Metadata = {
-  title: "Visualizador 3D — MEDATLAS",
-  description: "Explore o corpo humano em 3D interativo, com camadas por sistema anatômico.",
+  title: "Atlas 3D",
+  description: "Esqueleto humano em 3D: gire, corte, isole ossos e estude cada estrutura com conteúdo, questões e flashcards.",
 };
 
-export default function ViewerPage() {
-  return <ViewerLayout />;
+// Lê o banco a cada requisição: o build não depende de banco
+export const dynamic = "force-dynamic";
+
+export default async function ViewerPage() {
+  const structures = await listStructures();
+  return (
+    <Suspense>
+      <ViewerLayout structures={structures} />
+    </Suspense>
+  );
 }

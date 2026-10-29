@@ -43,12 +43,6 @@ const HISTO_IRREGULAR = `## Histologia — Osso Irregular (vértebra)
 - Matriz óssea lamelar com osteócitos; trabéculas alinhadas às forças de compressão axial.
 - O **disco intervertebral** adjacente é **fibrocartilagem** (ânulo fibroso) com núcleo pulposo gelatinoso.`;
 
-const BONE_DX = `## Diagnóstico por imagem
-- **Radiografia (Raio-X)**: exame inicial para fraturas e alterações ósseas.
-- **Tomografia (TC)**: detalha fraturas complexas e a arquitetura óssea.
-- **Ressonância (RM)**: avalia medula óssea, partes moles e lesões ocultas.
-- **Cintilografia óssea**: rastreia metástases, infecções e fraturas de estresse.`;
-
 export const CLINICAL_CONTENT: Record<string, ClinicalContent> = {
   // ───────────── CRÂNIO E FACE ─────────────
   skull: {

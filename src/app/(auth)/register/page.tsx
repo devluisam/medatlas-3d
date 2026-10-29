@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 
-export const metadata: Metadata = { title: "Criar Conta — MEDATLAS 3D" };
+export const metadata: Metadata = { title: "Criar conta" };
 
 export default function RegisterPage() {
   return (

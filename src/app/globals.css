@@ -3,99 +3,47 @@
 @tailwind utilities;
 
 /* ================================================================
-   MEDATLAS 3D — Design System Tokens
+   MEDATLAS 3D — tokens de design
+   Tema escuro único: o visualizador 3D e as páginas de estudo usam a
+   mesma superfície, sem cores fixas espalhadas pelos componentes.
+   Contraste do texto secundário (muted-foreground) sobre o fundo ≈ 7:1.
    ================================================================ */
 
 @layer base {
   :root {
-    /* Brand */
-    --brand-blue: 210 100% 52%;
-    --brand-blue-dark: 215 100% 40%;
-    --brand-cyan: 190 95% 50%;
-    --brand-glow: 210 100% 65%;
+    --background: 222 44% 5%;
+    --foreground: 210 30% 96%;
 
-    /* Surface */
-    --background: 220 20% 97%;
-    --foreground: 220 20% 8%;
-    --surface: 220 15% 100%;
-    --surface-elevated: 220 15% 99%;
-    --surface-overlay: 220 20% 95%;
+    --card: 222 34% 8.5%;
+    --card-foreground: 210 30% 96%;
+    --popover: 222 36% 8%;
+    --popover-foreground: 210 30% 96%;
 
-    /* Card */
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 8%;
+    --primary: 204 88% 58%;
+    --primary-foreground: 222 47% 7%;
+    --secondary: 222 26% 14%;
+    --secondary-foreground: 210 25% 88%;
+    --muted: 222 26% 13%;
+    --muted-foreground: 216 16% 68%;
+    --accent: 222 26% 16%;
+    --accent-foreground: 210 30% 96%;
 
-    /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 8%;
-
-    /* Primary */
-    --primary: 210 100% 52%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary */
-    --secondary: 220 15% 92%;
-    --secondary-foreground: 220 20% 20%;
-
-    /* Muted */
-    --muted: 220 15% 93%;
-    --muted-foreground: 220 10% 45%;
-
-    /* Accent */
-    --accent: 190 95% 50%;
-    --accent-foreground: 220 20% 8%;
-
-    /* Destructive */
-    --destructive: 0 84% 60%;
+    /* Estados */
+    --success: 152 58% 46%;
+    --warning: 38 92% 58%;
+    --destructive: 0 72% 58%;
     --destructive-foreground: 0 0% 98%;
+    /* Conteúdo gerado por IA */
+    --ai: 262 70% 72%;
 
-    /* Border */
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
-    --ring: 210 100% 52%;
+    --border: 222 22% 17%;
+    --input: 222 22% 19%;
+    --ring: 204 88% 58%;
+    --radius: 0.75rem;
 
-    /* Radius */
-    --radius: 0.625rem;
-
-    /* Chart */
-    --chart-1: 210 100% 52%;
-    --chart-2: 190 95% 50%;
-    --chart-3: 160 60% 45%;
-    --chart-4: 43 96% 56%;
-    --chart-5: 0 84% 60%;
-  }
-
-  .dark {
-    --background: 220 25% 5%;
-    --foreground: 210 20% 96%;
-    --surface: 220 22% 8%;
-    --surface-elevated: 220 22% 10%;
-    --surface-overlay: 220 22% 12%;
-
-    --card: 220 22% 8%;
-    --card-foreground: 210 20% 96%;
-
-    --popover: 220 22% 7%;
-    --popover-foreground: 210 20% 96%;
-
-    --primary: 210 100% 60%;
-    --primary-foreground: 220 25% 5%;
-
-    --secondary: 220 20% 14%;
-    --secondary-foreground: 210 20% 80%;
-
-    --muted: 220 20% 14%;
-    --muted-foreground: 220 10% 55%;
-
-    --accent: 190 95% 50%;
-    --accent-foreground: 220 25% 5%;
-
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 220 20% 14%;
-    --input: 220 20% 14%;
-    --ring: 210 100% 60%;
+    --viewer-bg-top: 222 40% 7%;
+    --viewer-bg-bottom: 220 38% 11%;
+    color-scheme: dark;
   }
 }
 
@@ -104,182 +52,77 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+
   ::selection {
-    @apply bg-primary/25 text-foreground;
+    @apply bg-primary/30 text-foreground;
+  }
+
+  /* Foco sempre visível para teclado, discreto para mouse */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
   ::-webkit-scrollbar {
-    @apply w-1.5 h-1.5;
+    @apply h-2 w-2;
   }
-
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
   }
-
   ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
+    @apply rounded-full bg-border;
   }
-
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/30;
+    @apply bg-muted-foreground/40;
   }
 }
-
-/* ================================================================
-   MEDATLAS COMPONENTS
-   ================================================================ */
 
 @layer components {
-  /* Glass morphism card */
-  .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl;
-  }
-
-  .glass-dark {
-    @apply bg-black/20 backdrop-blur-xl border border-white/10 shadow-2xl;
-  }
-
-  /* Medical glow effect */
-  .glow-blue {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3),
-      0 0 60px hsl(var(--primary) / 0.1);
-  }
-
-  .glow-cyan {
-    box-shadow: 0 0 20px hsl(var(--accent) / 0.3),
-      0 0 60px hsl(var(--accent) / 0.1);
-  }
-
-  /* Anatomy highlight ring */
-  .anatomy-ring {
-    @apply ring-2 ring-primary/60 ring-offset-2 ring-offset-background;
-  }
-
-  /* Medical data grid */
-  .data-grid {
-    @apply grid gap-px bg-border rounded-xl overflow-hidden;
-  }
-
-  .data-cell {
-    @apply bg-card p-4;
-  }
-
-  /* HUD panel */
+  /* Painel flutuante sobre o canvas 3D */
   .hud-panel {
-    @apply glass-dark rounded-xl p-3 text-sm text-white/80;
+    @apply rounded-xl border border-border/80 bg-card/85 shadow-xl shadow-black/30 backdrop-blur-md;
   }
 
-  /* System badge */
-  .system-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
-  }
-
-  /* Scan line overlay */
-  .scanlines::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.03) 2px,
-      rgba(0, 0, 0, 0.03) 4px
-    );
-    pointer-events: none;
-  }
-
-  /* Neon text */
-  .text-neon-blue {
-    color: hsl(var(--primary));
-    text-shadow: 0 0 10px hsl(var(--primary) / 0.8),
-      0 0 20px hsl(var(--primary) / 0.4);
-  }
-
-  /* Gradient heading */
-  .gradient-heading {
-    @apply bg-gradient-to-r from-white via-blue-100 to-cyan-300 bg-clip-text text-transparent;
-  }
-
-  /* Viewer canvas wrapper */
   .viewer-canvas {
-    @apply w-full h-full bg-gradient-to-b from-[#050a14] to-[#0a1628];
-  }
-}
-
-/* ================================================================
-   ANIMATIONS
-   ================================================================ */
-
-@layer utilities {
-  .animate-pulse-slow {
-    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background: linear-gradient(180deg, hsl(var(--viewer-bg-top)), hsl(var(--viewer-bg-bottom)));
   }
 
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
+  /* Rótulo de seção (caixa alta discreta) */
+  .eyebrow {
+    @apply text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground;
   }
 
-  .animate-scan {
-    animation: scan 3s linear infinite;
-  }
-
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite alternate;
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground;
   }
 }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes scan {
-  0% { transform: translateY(-100%); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateY(100%); opacity: 0; }
-}
-
-@keyframes glow {
-  from { box-shadow: 0 0 10px hsl(var(--primary) / 0.3); }
-  to { box-shadow: 0 0 30px hsl(var(--primary) / 0.6), 0 0 60px hsl(var(--primary) / 0.2); }
-}
-
-/* ================================================================
-   VIEWER SPECIFICS
-   ================================================================ */
 
 canvas {
   touch-action: none;
   outline: none;
 }
 
-.viewer-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Loading skeleton shimmer */
-.shimmer {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--muted)) 25%,
-    hsl(var(--muted-foreground) / 0.1) 50%,
-    hsl(var(--muted)) 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Respeita "reduzir movimento" do sistema em toda a interface */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
